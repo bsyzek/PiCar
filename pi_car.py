@@ -1,23 +1,38 @@
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 import time
 import cv2
-import numpy as np
 import pygame
+import numpy as np
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 from drive_controller import DriveController
+from aws_manager import AWSManager
 
 class PiCar:
 
     # Camera Info
-    SCREEN_WIDTH  = 640
-    SCREEN_HEIGHT = 480
-    FRAME_RATE    = 32
+    SCREEN_WIDTH  = 200
+    SCREEN_HEIGHT = 66
+    FRAME_RATE    = 24 
 
-    def __init__(self):
+    def __init__(self, record_training_data=False):
         print('Setting up PiCar...')
-
+        
+        if record_training_data:
+            self.record_training_data = True
+            print('Recording training data...')
+        else:
+            self.record_training_data = False
+            
         self.dc = DriveController()
+        self.aws_manager = AWSManager()
         self.setup_camera()
+
+        # Structs for collecting training images and labels
+        self.training_images = []
+        self.training_labels = []
+
+        # Stores the current user drive instruction
+        self.current_drive_input = 'forward'
 
         # Using pygame in process remote keyboard inputs
         pygame.init()
@@ -39,38 +54,48 @@ class PiCar:
     def process_user_inputs(self):
         for event in pygame.event.get():
             if event.type == pygame.KEYUP:
-                self.dc.stop()
+                self.dc.forward()
+                self.current_drive_input = 'forward'
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    self.dc.forward()
-                elif event.key == pygame.K_DOWN:
-                    self.dc.backward()
-                elif event.key == pygame.K_RIGHT:
+                #if event.key == pygame.K_UP:
+                #    self.dc.forward()
+                #    self.current_drive_input = 'forward'
+                #elif event.key == pygame.K_DOWN:
+                #    self.dc.backward()
+                #    self.current_drive_input = 'backward'
+                if event.key == pygame.K_RIGHT:
                     self.dc.pivot_right()
+                    self.current_drive_input = 'right'
                 elif event.key == pygame.K_LEFT:
                     self.dc.pivot_left()
-
+                    self.current_drive_input = 'left'
+                else:
+                    self.dc.forward()
+                    self.current_drive_input = 'forward'
 
     def drive(self):
         for frame in self.camera.capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
 
-            # Display camera feed
             image = frame.array
+
+            # Use remote keyboard inputs to steer PiCar
+            self.process_user_inputs() 
+
+            # Record training data
+            if self.record_training_data:
+                self.training_images.append(image)
+                self.training_labels.append(self.current_drive_input)
+            
+            # Display camera feed
             cv2.imshow("Feed", image)
             key = cv2.waitKey(1) & 0xFF
             self.raw_capture.truncate(0)
 
             # Exit program if user pressed 'q'
             if key == ord("q"):
+                self.dc.stop()
+
+                # Upload training data to AWS before exiting
+                if self.record_training_data:
+                    self.aws_manager.upload_training_data(self.training_images, self.training_labels)
                 break
-
-            # Use remote keyboard inputs to steer PiCar
-            self.process_user_inputs() 
-            
-
-def main():
-    car = PiCar()
-    car.drive()
-
-if __name__ == '__main__':
-    main()
