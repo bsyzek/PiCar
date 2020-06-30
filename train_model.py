@@ -1,5 +1,6 @@
 import os
 import pickle
+import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -9,6 +10,8 @@ from tensorflow.keras.models import load_model
 
 TRAINING_DATA_DIR = 'training_data'
 PERCENT_TRAIN = 0.8
+LABEL_MAP = {'forward': 0, 'right': 1, 'left': 2}
+NUM_CATEGORIES = 3
 
 def nvidia_model():
     # Model based on tutorial 
@@ -79,7 +82,13 @@ def preprocess(images):
     pass
 
 def one_hot(labels):
-    pass
+    labels_to_ints = []
+    for label in labels:
+        labels_to_ints.append(LABEL_MAP[label])
+
+    one_hot_labels = tf.one_hot(labels_to_ints, NUM_CATEGORIES)
+    return one_hot_labels.numpy()
+    
 
 if __name__ == '__main__':
     X_train_orig, y_train_orig, X_test_orig, y_test_orig = load_training_data()
@@ -92,7 +101,11 @@ if __name__ == '__main__':
     #X_train = preprocess(X_train_orig)
     #X_test = preprocess(X_test_orig)
 
-    #y_train = one_hot(y_train_orig)
-    #y_test = one_hot(y_test_orig)
+    y_train = one_hot(y_train_orig)
+    y_test = one_hot(y_test_orig)
+
+    print("y_train: " + str(y_train.shape))
+    print("y_orig[1000]: " + y_train_orig[1000])
+    print("y_train[1000]: " + str(y_train[1000]))
 
     #model = nvidia_model()
