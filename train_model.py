@@ -1,12 +1,17 @@
+import os
+import pickle
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense, Activation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
-from sklearn.preprocessing import OneHotEncoder
+
+TRAINING_DATA_DIR = 'training_data'
+PERCENT_TRAIN = 0.8
 
 def nvidia_model():
-    # Model copied from 
+    # Model based on tutorial 
     # https://towardsdatascience.com/deeppicar-part-5-lane-following-via-deep-learning-d93acdce6110
     
     model = Sequential(name='Nvidia_Model')
@@ -34,22 +39,60 @@ def nvidia_model():
 
     return model
 
-    def load_training_data():
-        pass
+def load_training_data():
+    images = []
+    labels = []
+    
+    for file in os.listdir(TRAINING_DATA_DIR):
+        file_path = TRAINING_DATA_DIR + "\\" + file
+        training_data = pickle.load( open(file_path, 'rb'))
+        
+        for image in training_data["images"]:
+                images.append(image)
+        
+        for label in training_data["labels"]:
+            labels.append(label)
 
-    def preprocess(images):
-        pass
+    images = np.array(images)
+    labels = np.array(labels)
 
-    def one_hot(labels):
-        pass
+    num_images = labels.shape[0]
+    num_training_images = int(num_images * PERCENT_TRAIN)
+    training_indices = np.random.choice(num_images, num_training_images, replace=False)
+
+    training_images = []
+    training_labels = []
+    testing_images = []
+    testing_labels = []
+    
+    for idx in range(num_images):
+        if idx in training_indices:
+            training_images.append(images[idx])
+            training_labels.append(labels[idx])
+        else:
+            testing_images.append(images[idx])
+            testing_labels.append(labels[idx])
+
+    return np.array(training_images), np.array(training_labels), np.array(testing_images), np.array(testing_labels)
+
+def preprocess(images):
+    pass
+
+def one_hot(labels):
+    pass
 
 if __name__ == '__main__':
     X_train_orig, y_train_orig, X_test_orig, y_test_orig = load_training_data()
 
-    X_train = preprocess(X_train_orig)
-    X_test = preprocess(X_test_orig)
+    print("X_train_orig: " + str(X_train_orig.shape))
+    print("y_train_orig: " + str(y_train_orig.shape))
+    print("X_test_orig: " + str(X_test_orig.shape))
+    print("y_test_orig: " + str(y_test_orig.shape))
 
-    y_train = one_hot(y_train_orig)
-    y_test = one_hot(y_test_orig)
+    #X_train = preprocess(X_train_orig)
+    #X_test = preprocess(X_test_orig)
 
-    model = nvidia_model()
+    #y_train = one_hot(y_train_orig)
+    #y_test = one_hot(y_test_orig)
+
+    #model = nvidia_model()
