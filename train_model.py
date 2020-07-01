@@ -79,7 +79,12 @@ def load_training_data():
     return np.array(training_images), np.array(training_labels), np.array(testing_images), np.array(testing_labels)
 
 def preprocess(images):
-    pass
+    processed_images = []
+    for image in images: 
+        image = image / 255.0
+        processed_images.append(image)
+    
+    return np.array(processed_images)
 
 def one_hot(labels):
     labels_to_ints = []
@@ -93,19 +98,19 @@ def one_hot(labels):
 if __name__ == '__main__':
     X_train_orig, y_train_orig, X_test_orig, y_test_orig = load_training_data()
 
-    print("X_train_orig: " + str(X_train_orig.shape))
-    print("y_train_orig: " + str(y_train_orig.shape))
-    print("X_test_orig: " + str(X_test_orig.shape))
-    print("y_test_orig: " + str(y_test_orig.shape))
-
-    #X_train = preprocess(X_train_orig)
-    #X_test = preprocess(X_test_orig)
+    X_train = preprocess(X_train_orig)
+    X_test = preprocess(X_test_orig)
 
     y_train = one_hot(y_train_orig)
     y_test = one_hot(y_test_orig)
 
-    print("y_train: " + str(y_train.shape))
-    print("y_orig[1000]: " + y_train_orig[1000])
-    print("y_train[1000]: " + str(y_train[1000]))
+    model = nvidia_model()
+    model.fit(X_train, y_train, batch_size=100, epochs=20)
+    model.save('nvidia_model.h5')
+    
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    tflite_model = converter.convert()
+    with tf.io.gfile.GFile('nvidia_model.tflite', 'wb') as f:
+        f.write(tflite_model)
 
-    #model = nvidia_model()
+    #model.evaluate(X_test, y_test)
