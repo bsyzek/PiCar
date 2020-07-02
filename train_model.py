@@ -93,7 +93,28 @@ def one_hot(labels):
 
     one_hot_labels = tf.one_hot(labels_to_ints, NUM_CATEGORIES)
     return one_hot_labels.numpy()
+
+
+
+def save_model(model, X_train):
+    images = tf.cast(X_train, tf.float32)
+    image_ds = tf.data.Dataset.from_tensor_slices((images)).batch(1)
+
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+
+    def representative_data_gen():
+        for input_value in image_ds.take(100):
+            # Model has only one input so each data point has one element.
+            yield [input_value]
     
+    converter.representative_dataset = representative_data_gen
+
+    tflite_model = converter.convert()
+
+    with tf.io.gfile.GFile('nvidia_model_quant.tflite', 'wb') as f:
+        f.write(tflite_model)
+
 
 if __name__ == '__main__':
     X_train_orig, y_train_orig, X_test_orig, y_test_orig = load_training_data()
@@ -105,12 +126,7 @@ if __name__ == '__main__':
     y_test = one_hot(y_test_orig)
 
     model = nvidia_model()
-    model.fit(X_train, y_train, batch_size=100, epochs=20)
-    model.save('nvidia_model.h5')
-    
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tflite_model = converter.convert()
-    with tf.io.gfile.GFile('nvidia_model.tflite', 'wb') as f:
-        f.write(tflite_model)
+    model.fit(X_train, y_train, batch_size=100, epochs=1)
 
-    #model.evaluate(X_test, y_test)
+    save_model(model, X_train)
+    
