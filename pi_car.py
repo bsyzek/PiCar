@@ -6,6 +6,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 from drive_controller import DriveController
 from aws_manager import AWSManager
+from model_manager import ModelManager
 
 class PiCar:
 
@@ -77,13 +78,21 @@ class PiCar:
                     self.dc.forward()
                     self.current_drive_input = 'forward'
 
+    def convert_model_output_to_drive_command(self, model_output):
+        pass
+
     def drive(self):
         for frame in self.camera.capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
 
             image = frame.array
 
-            # Use remote keyboard inputs to steer PiCar
-            self.process_user_inputs() 
+            if self.model_manager:
+                # Use model to steer PiCar
+                output = self.model_manager.run_inference(image)
+                self.convert_model_output_to_drive_command(output)
+            else: 
+                # Use remote keyboard inputs to steer PiCar
+                self.process_user_inputs() 
 
             # Record training data
             if self.record_training_data:
