@@ -21,19 +21,19 @@ def nvidia_model():
     model = Sequential(name='Nvidia_Model')
 
     # Convolutional layers
-    model.add(Conv2D(24, (5, 5), strides=(2,2), input_shape=(66, 200, 3), activation='relu'))
-    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
-    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(24, (5, 5), strides=(2,2), input_shape=(66, 200, 3), activation='elu'))
+    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu'))
+    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='elu'))
+    model.add(Conv2D(64, (3, 3), activation='elu'))
     model.add(Dropout(0.2)) # Not in original model
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='elu'))
 
     # Fully connected layers 
     model.add(Flatten())
     model.add(Dropout(0.2)) # Not in original model
-    model.add(Dense(100, activation='relu'))
-    model.add(Dense(50, activation='relu'))
-    model.add(Dense(10, activation='relu'))
+    model.add(Dense(100, activation='elu'))
+    model.add(Dense(50, activation='elu'))
+    model.add(Dense(10, activation='elu'))
 
     # Output layer
     model.add(Dense(3, activation='softmax'))
@@ -104,23 +104,11 @@ if __name__ == '__main__':
     y_test = one_hot(y_test_orig)
 
     model = nvidia_model()
-    
-    quantize_model = tfmot.quantization.keras.quantize_model
 
-    # q_aware stands for for quantization aware.
-    q_aware_model = quantize_model(model)
-
-    # `quantize_model` requires a recompile.
-    q_aware_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-    q_aware_model.summary()
-
-    q_aware_model.fit(X_train, y_train, batch_size=100, epochs=1)
-
-    converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
-    quantized_tflite_model = converter.convert()
+    tflite_model = converter.convert()
 
-    with tf.io.gfile.GFile('nvidia_model_quant.tflite', 'wb') as f:
-        f.write(quantized_tflite_model)
+    with tf.io.gfile.GFile('nvidia_model.tflite', 'wb') as f:
+        f.write(tflite_model)

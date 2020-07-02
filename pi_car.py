@@ -14,14 +14,18 @@ class PiCar:
     SCREEN_HEIGHT = 66
     FRAME_RATE    = 24 
 
-    def __init__(self, record_training_data=False):
+    def __init__(self, record_training_data=False, model=None):
         print('Setting up PiCar...')
         
-        if record_training_data:
+        if record_training_data and not model:
             self.record_training_data = True
             print('Recording training data...')
         else:
             self.record_training_data = False
+
+        if model:
+            self.model_manager = ModelManager()
+            self.model_manager.load_model(model)
             
         self.dc = DriveController()
         self.aws_manager = AWSManager()
