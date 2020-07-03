@@ -74,6 +74,18 @@ class PiCar:
 
     def convert_model_output_to_drive_command(self, model_output):
         print(str(model_output))
+        max_index = np.argmax(model_output)
+        if max_index == 0:
+            self.dc.forward()
+            self.current_drive_input = 'forward'
+        elif max_index == 1:
+            self.dc.pivot_right()
+            self.current_drive_input = 'right'
+        elif max_index == 2:
+            self.dc.pivot_left()
+            self.current_drive_input = 'left'
+
+        print(self.current_drive_input)
 
     def drive(self):
         for frame in self.camera.capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
@@ -82,6 +94,7 @@ class PiCar:
 
             if self.model_manager:
                 # Use model to steer PiCar
+                image = image / 255.0
                 output = self.model_manager.run_inference(image)
                 self.convert_model_output_to_drive_command(output)
             else: 

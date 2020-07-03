@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class ModelManager:
 
@@ -16,10 +17,12 @@ class ModelManager:
 
     
     def run_inference(self, image):
-        self.interpreter.set_tensor(self.input_details[0]['index'], image)
+        input_data = np.array(image, dtype=np.float32)
+        input_data = np.expand_dims(input_data, 0)
+        self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
         
         output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
         
-        return output_data
+        return output_data.flatten()
     
