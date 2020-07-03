@@ -27,6 +27,8 @@ class PiCar:
         if model:
             self.model_manager = ModelManager()
             self.model_manager.load_model(model)
+        else:
+            self.model_manager = None
             
         self.dc = DriveController()
         self.aws_manager = AWSManager()
