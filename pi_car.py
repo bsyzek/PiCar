@@ -62,12 +62,6 @@ class PiCar:
                 self.dc.forward()
                 self.current_drive_input = 'forward'
             elif event.type == pygame.KEYDOWN:
-                #if event.key == pygame.K_UP:
-                #    self.dc.forward()
-                #    self.current_drive_input = 'forward'
-                #elif event.key == pygame.K_DOWN:
-                #    self.dc.backward()
-                #    self.current_drive_input = 'backward'
                 if event.key == pygame.K_RIGHT:
                     self.dc.pivot_right()
                     self.current_drive_input = 'right'
@@ -79,7 +73,7 @@ class PiCar:
                     self.current_drive_input = 'forward'
 
     def convert_model_output_to_drive_command(self, model_output):
-        pass
+        print(str(model_output))
 
     def drive(self):
         for frame in self.camera.capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
