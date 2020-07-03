@@ -104,10 +104,10 @@ if __name__ == '__main__':
     y_test = one_hot(y_test_orig)
 
     model = nvidia_model()
-    model.fit(X_train, y_train, batch_size=100, epochs=30)
+    model.fit(X_train, y_train, batch_size=128, epochs=30)
     
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     tflite_model = converter.convert()
 
-    with tf.io.gfile.GFile('nvidia_model_v2.tflite', 'wb') as f:
+    with tf.io.gfile.GFile('nvidia_model_v3.tflite', 'wb') as f:
         f.write(tflite_model)
