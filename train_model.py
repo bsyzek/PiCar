@@ -8,11 +8,32 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense, Activation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
+import matplotlib.pyplot as plt
+
 
 TRAINING_DATA_DIR = 'training_data'
-PERCENT_TRAIN = 0.8
+PERCENT_TRAIN = 0.99
 LABEL_MAP = {'forward': 0, 'right': 1, 'left': 2}
 NUM_CATEGORIES = 3
+
+def test_model():
+    
+    model = Sequential(name='Test_Model')
+
+    model.add(Conv2D(10, 5, padding="same", input_shape=(66, 200, 3), activation='relu'))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+
+    model.add(Conv2D(20, 5, padding="same", activation='relu'))
+    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+
+    model.add(Flatten())
+    model.add(Dense(50, activation='relu'))
+
+    model.add(Dense(3, activation='softmax'))
+
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    return model
 
 def nvidia_model():
     # Model based on tutorial 
@@ -103,11 +124,16 @@ if __name__ == '__main__':
     y_train = one_hot(y_train_orig)
     y_test = one_hot(y_test_orig)
 
-    model = nvidia_model()
-    model.fit(X_train, y_train, batch_size=128, epochs=30)
+    model = test_model()
     
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tflite_model = converter.convert()
+    history = model.fit(X_train, y_train, batch_size=100, epochs=10)
 
-    with tf.io.gfile.GFile('nvidia_model_v3.tflite', 'wb') as f:
-        f.write(tflite_model)
+    plt.plot(history.history['loss'], color='blue')
+    plt.legend(["training loss"])
+    plt.show()
+    
+    # converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    # tflite_model = converter.convert()
+
+    # with tf.io.gfile.GFile('nvidia_model_v3.tflite', 'wb') as f:
+    #     f.write(tflite_model)
